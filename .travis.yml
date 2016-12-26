@@ -1,0 +1,17 @@
+language: go
+
+go:
+  - 1.x
+  - 1.6
+  - 1.7.x
+  - master
+
+env:
+  - LIBGADU_VERSION=1.12.1
+
+before_install:
+  - wget http://github.com/wojtekka/libgadu/releases/download/$LIBGADU_VERSION/libgadu-$LIBGADU_VERSION.tar.gz
+  - tar -zxvf libgadu-$LIBGADU_VERSION.tar.gz
+  - cd libgadu-$LIBGADU_VERSION
+  - ./configure --prefix=/usr
+  - make
