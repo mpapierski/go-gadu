@@ -8,3 +8,17 @@ func TestVersion(t *testing.T) {
 		t.Errorf("Invalid version: %s", version)
 	}
 }
+
+func TestGGSession(t *testing.T) {
+	session := NewGGSession()
+	_ = session
+}
+
+func TestGGSessionLogin(t *testing.T) {
+	session := NewGGSession()
+	session.Uin = 1234
+	session.Password = "password"
+	if session.Login() != nil {
+		t.Fatalf("Unable to login")
+	}
+}
