@@ -46,6 +46,7 @@ import (
 
 //export startGoResolver
 func startGoResolver(fd C.int, name *C.char) C.int {
+	defer syscall.Close((int)(fd))
 	host := C.GoString(name)
 	addrs, err := net.LookupHost(host)
 	if err != nil {
@@ -61,8 +62,8 @@ func startGoResolver(fd C.int, name *C.char) C.int {
 	_, err = syscall.Write((int)(fd), C.GoBytes(unsafe.Pointer(&addrIP[0]), (C.int)((len(addrIP))*C.sizeof_struct_in_addr)))
 	if err != nil {
 		log.Fatalf("Unable to send address: %s", err)
+		return -1
 	}
-	syscall.Close((int)(fd))
 	return 0
 }
 
