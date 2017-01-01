@@ -37,6 +37,10 @@ func Version() string {
 	return C.GoString(C.gg_libgadu_version())
 }
 
+func (session GGSession) Close() {
+	C.gg_free_session(session.session)
+}
+
 func (session GGSession) Login() error {
 	params := C.struct_gg_login_params{
 		uin:               (C.uin_t)(session.Uin),
