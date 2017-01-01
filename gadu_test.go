@@ -20,7 +20,8 @@ func TestGGSessionLogin(t *testing.T) {
 	defer session.Close()
 	session.Uin = 1234
 	session.Password = "password"
-	if session.Login() != nil {
-		t.Fatalf("Unable to login")
+
+	if e := session.Login(); e != AccessDeniedError {
+		t.Fatalf("Unable to login: %s", e.Error())
 	}
 }

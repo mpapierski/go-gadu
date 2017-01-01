@@ -20,15 +20,23 @@ const (
 	GG_FEATURE_IMAGE_DESCR = C.GG_FEATURE_IMAGE_DESCR
 )
 
+const (
+	GG_CHECK_READ  = C.GG_CHECK_READ
+	GG_CHECK_WRITE = C.GG_CHECK_WRITE
+)
+
 type GGSession struct {
 	Uin      uint32
 	Password string
 	session  *C.struct_gg_session
+
+	events chan *GGEvent
 }
 
 func NewGGSession() *GGSession {
 	s := new(GGSession)
 	s.session = nil
+	s.events = make(chan *GGEvent, 100)
 	return s
 }
 
@@ -39,6 +47,10 @@ func Version() string {
 
 func (session GGSession) Close() {
 	C.gg_free_session(session.session)
+}
+
+func (session GGSession) watchFd() *GGEvent {
+	return (*GGEvent)(C.gg_watch_fd(session.session))
 }
 
 func (session GGSession) Login() error {
@@ -56,5 +68,17 @@ func (session GGSession) Login() error {
 	if session.session == nil {
 		return NewGGError(err)
 	}
-	return nil
+	go session.poller()
+	for {
+		e := <-session.events
+		defer e.Close()
+
+		if e.Type() == GG_EVENT_CONN_FAILED {
+			return AccessDeniedError
+		}
+		if e.Type() == GG_EVENT_CONN_SUCCESS {
+			return nil
+		}
+	}
+	return Fault
 }
