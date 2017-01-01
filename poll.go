@@ -20,7 +20,7 @@ func (session GGSession) poller() {
 		}
 		err := syscall.Select(fd+1, rd, wr, nil, &syscall.Timeval{Sec: 1, Usec: 0})
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("Unable to select(): %s", err)
 			break
 		}
 

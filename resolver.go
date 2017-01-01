@@ -18,7 +18,6 @@ struct resolve_data {
 static void cleanupGoResolver_wrapper(void** priv_data, int force) {
 	struct resolve_data* data = (struct resolve_data*)*priv_data;
 	close(data->pipes[0]);
-	close(data->pipes[1]);
 	free(data);
 }
 
@@ -39,7 +38,6 @@ static void SetCustomResolver() {
 */
 import "C"
 import (
-	"fmt"
 	"log"
 	"net"
 	"syscall"
@@ -51,24 +49,25 @@ func startGoResolver(fd C.int, name *C.char) C.int {
 	host := C.GoString(name)
 	addrs, err := net.LookupHost(host)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Unable to lookup host %s: %s", host, err)
 	}
 
-	addrIP := make([]C.struct_in_addr, len(addrs))
+	addrIP := make([]C.struct_in_addr, len(addrs)+1)
+	addrIP[len(addrIP)-1].s_addr = C.INADDR_NONE
+
 	for index, addr := range addrs {
 		C.inet_pton(C.AF_INET, C.CString(addr), unsafe.Pointer(&addrIP[index]))
-
 	}
-	_, err = syscall.Write((int)(fd), C.GoBytes(unsafe.Pointer(&addrIP[0]), (C.int)(len(addrs)*C.sizeof_struct_in_addr)))
+	_, err = syscall.Write((int)(fd), C.GoBytes(unsafe.Pointer(&addrIP[0]), (C.int)((len(addrIP))*C.sizeof_struct_in_addr)))
 	if err != nil {
 		log.Fatalf("Unable to send address: %s", err)
 	}
+	syscall.Close((int)(fd))
 	return 0
 }
 
 //export cleanupGoResolver
 func cleanupGoResolver() {
-	fmt.Printf("Cleanup\n")
 }
 
 func init() {
