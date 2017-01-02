@@ -19,13 +19,13 @@ func (session GGSession) poller() {
 		if session.session.check&GG_CHECK_WRITE != 0 {
 			FD_SET(wr, fd)
 		}
-		_, err := syscall.Select(fd+1, rd, wr, nil, &syscall.Timeval{Sec: 1, Usec: 0})
+		n, err := syscall_Select(fd+1, rd, wr, nil, &syscall.Timeval{Sec: 1, Usec: 0})
 		if err != nil {
 			log.Fatalf("Unable to select(): %s", err)
 			break
 		}
 
-		if FD_ISSET(rd, fd) || FD_ISSET(wr, fd) {
+		if n > 0 && (FD_ISSET(rd, fd) || FD_ISSET(wr, fd)) {
 			e := session.watchFd()
 			if e == nil {
 				break
