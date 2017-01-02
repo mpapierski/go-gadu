@@ -6,6 +6,10 @@ go:
   - 1.7.x
   - master
 
+os:
+  - linux
+  - osx
+
 env:
   - LIBGADU_VERSION=1.12.1
 
