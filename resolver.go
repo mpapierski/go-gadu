@@ -17,7 +17,6 @@ struct resolve_data {
 
 static void cleanupGoResolver_wrapper(void** priv_data, int force) {
 	struct resolve_data* data = (struct resolve_data*)*priv_data;
-	close(data->pipes[0]);
 	free(data);
 }
 
