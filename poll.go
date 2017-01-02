@@ -11,6 +11,9 @@ func (session GGSession) poller() {
 	wr := new(syscall.FdSet)
 	fd := (int)(session.session.fd)
 	for {
+		if session.session == nil {
+			break
+		}
 		FD_ZERO(rd)
 		FD_ZERO(wr)
 		if session.session.check&GG_CHECK_READ != 0 {
@@ -25,9 +28,10 @@ func (session GGSession) poller() {
 			break
 		}
 
-		if n > 0 && (FD_ISSET(rd, fd) || FD_ISSET(wr, fd)) {
+		if n > 0 && (FD_ISSET(rd, fd) || FD_ISSET(wr, fd) || (session.session.timeout == 0 && session.session.soft_timeout > 0)) {
 			e := session.watchFd()
 			if e == nil {
+				session.Close()
 				break
 			}
 			session.events <- e

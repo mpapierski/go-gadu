@@ -47,6 +47,7 @@ func Version() string {
 
 func (session GGSession) Close() {
 	C.gg_free_session(session.session)
+	session.session = nil
 }
 
 func (session GGSession) watchFd() *GGEvent {
