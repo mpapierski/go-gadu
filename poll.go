@@ -9,13 +9,16 @@ import (
 func (session GGSession) poller() {
 	rd := new(syscall.FdSet)
 	wr := new(syscall.FdSet)
-	fd := (int)(session.session.fd)
+
 	for {
 		if session.session == nil {
 			break
 		}
 		FD_ZERO(rd)
 		FD_ZERO(wr)
+
+		fd := (int)(session.session.fd)
+
 		if session.session.check&GG_CHECK_READ != 0 {
 			FD_SET(rd, fd)
 		}
