@@ -5,7 +5,24 @@ go-gadu
 
 `libgadu` bindings for **Go**.
 
-Work in progress. Use at your own risk.
+# Usage
+
+```sh
+go get github.com/mpapierski/go-gadu
+```
+
+Example code:
+
+```go
+package main
+
+import "github.com/mpapierski/go-gadu"
+import "fmt"
+
+func main() {
+    fmt.Printf("Version: %s\n", gadu.Version())
+}
+```
 
 # Authors
 
