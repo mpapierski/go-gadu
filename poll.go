@@ -18,7 +18,7 @@ func (session GGSession) poller() {
 		if session.session.check&GG_CHECK_WRITE != 0 {
 			FD_SET(wr, fd)
 		}
-		err := syscall.Select(fd+1, rd, wr, nil, &syscall.Timeval{Sec: 1, Usec: 0})
+		_, err := syscall.Select(fd+1, rd, wr, nil, &syscall.Timeval{Sec: 1, Usec: 0})
 		if err != nil {
 			log.Fatalf("Unable to select(): %s", err)
 			break
