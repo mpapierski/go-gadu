@@ -27,6 +27,13 @@ int gg_send_message2(struct gg_session *sess, int msgclass, uin_t recipient, con
 	}
 	return 0;
 }
+
+int gg_notify2(struct gg_session *sess, uin_t *userlist, int count) {
+	if (gg_notify(sess, userlist, count) == -1) {
+		return -errno;
+	}
+	return 0;
+}
 */
 import "C"
 import "unsafe"
@@ -47,9 +54,12 @@ const (
 	ggClassMsg = C.GG_CLASS_MSG
 )
 
+// Uin is your GG number
+type Uin C.uin_t
+
 // GGSession is a struct representing session with GG network
 type GGSession struct {
-	Uin      uint32
+	Uin      Uin
 	Password string
 	session  *C.struct_gg_session
 
@@ -139,11 +149,19 @@ func (session GGSession) Logout() {
 	C.gg_logoff(session.session)
 }
 
+// Notify sends contact list to server
+func (session GGSession) Notify(userList []Uin) error {
+	if errno := C.gg_notify2(session.session, (*C.uin_t)(unsafe.Pointer(&userList[0])), (C.int)(len(userList))); errno != 0 {
+		return NewGGError(-(int)(errno))
+	}
+	return nil
+}
+
 // SendMessage sends a message to a recipient
 func (session GGSession) SendMessage(uin uint64, text string) error {
 	cptr := C.CString(text)
-	if errno := C.gg_send_message(session.session, ggClassMsg, (C.uin_t)(uin), (*C.uchar)(unsafe.Pointer(cptr))); errno != 0 {
-		return NewGGError((int)(errno))
+	if errno := C.gg_send_message2(session.session, ggClassMsg, (C.uin_t)(uin), (*C.uchar)(unsafe.Pointer(cptr))); errno != 0 {
+		return NewGGError(-(int)(errno))
 	}
 	return nil
 }
