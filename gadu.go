@@ -20,6 +20,13 @@ int gg_ping2(struct gg_session* session) {
 	}
 	return 0;
 }
+
+int gg_send_message2(struct gg_session *sess, int msgclass, uin_t recipient, const unsigned char *message) {
+	if (gg_send_message2(sess, msgclass, recipient, message) == -1) {
+		return -errno;
+	}
+	return 0;
+}
 */
 import "C"
 import "unsafe"
@@ -34,6 +41,10 @@ const (
 const (
 	ggCheckRead  = C.GG_CHECK_READ
 	ggCheckWrite = C.GG_CHECK_WRITE
+)
+
+const (
+	ggClassMsg = C.GG_CLASS_MSG
 )
 
 // GGSession is a struct representing session with GG network
@@ -126,4 +137,13 @@ func (session GGSession) ticker() {
 // Logout ends connection with the server
 func (session GGSession) Logout() {
 	C.gg_logoff(session.session)
+}
+
+// SendMessage sends a message to a recipient
+func (session GGSession) SendMessage(uin uint64, text string) error {
+	cptr := C.CString(text)
+	if errno := C.gg_send_message(session.session, ggClassMsg, (C.uin_t)(uin), (*C.uchar)(unsafe.Pointer(cptr))); errno != 0 {
+		return NewGGError((int)(errno))
+	}
+	return nil
 }
