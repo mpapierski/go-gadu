@@ -16,13 +16,13 @@ static struct gg_session* gg_login2(struct gg_login_params* params, int* error) 
 
 int gg_ping2(struct gg_session* session) {
 	if (gg_ping(session) == -1) {
-		return errno;
+		return -errno;
 	}
 	return 0;
 }
 
-int gg_send_message2(struct gg_session *sess, int msgclass, uin_t recipient, const unsigned char *message) {
-	if (gg_send_message2(sess, msgclass, recipient, message) == -1) {
+int gg_send_message2(struct gg_session *sess, int msgclass, uin_t recipient, const char *message) {
+	if (gg_send_message(sess, msgclass, recipient, (const unsigned char*)message) == -1) {
 		return -errno;
 	}
 	return 0;
@@ -36,9 +36,12 @@ int gg_notify2(struct gg_session *sess, uin_t *userlist, int count) {
 }
 */
 import "C"
-import "unsafe"
-import "time"
-import "log"
+import (
+	"fmt"
+	"log"
+	"time"
+	"unsafe"
+)
 
 const (
 	// GGFeatureImageDescr means that client supports graphical statuses
@@ -59,11 +62,10 @@ type Uin C.uin_t
 
 // GGSession is a struct representing session with GG network
 type GGSession struct {
-	Uin      Uin
-	Password string
-	session  *C.struct_gg_session
-
-	events     chan *GGEvent
+	Uin        Uin
+	Password   string
+	session    *C.struct_gg_session
+	Events     chan *GGEvent
 	pingTicker *time.Ticker
 }
 
@@ -71,7 +73,7 @@ type GGSession struct {
 func NewGGSession() *GGSession {
 	s := new(GGSession)
 	s.session = nil
-	s.events = make(chan *GGEvent, 100)
+	s.Events = make(chan *GGEvent, 100)
 	s.pingTicker = nil
 	return s
 }
@@ -106,16 +108,20 @@ func (session GGSession) Login() error {
 	// We use wrapper because a wrapper function because cgo doesnt like errno.
 	// See https://github.com/golang/go/issues/1360
 	var err int
-	session.session = C.gg_login2((*C.struct_gg_login_params)(unsafe.Pointer(&params)), (*C.int)(unsafe.Pointer(&err)))
-	if session.session == nil {
+
+	s := C.gg_login2((*C.struct_gg_login_params)(unsafe.Pointer(&params)), (*C.int)(unsafe.Pointer(&err)))
+	if s == nil {
 		return NewGGError(err)
 	}
+	session.session = new(C.struct_gg_session)
+	session.session = s
 	go session.poller()
 	for {
-		e := <-session.events
+		e := <-session.Events
 		defer e.Close()
 
 		if e.Type() == GGEventConnectionFailed {
+			fmt.Println("failed and Session ", session.session != nil)
 			return AccessDeniedError
 		}
 		if e.Type() == GGEventConnectionSuccess {
@@ -130,7 +136,7 @@ func (session GGSession) Login() error {
 
 func (session GGSession) ping() error {
 	if result := C.gg_ping2(session.session); result != 0 {
-		return NewGGError((int)(result))
+		return NewGGError(-(int)(result))
 	}
 	return nil
 }
@@ -158,9 +164,8 @@ func (session GGSession) Notify(userList []Uin) error {
 }
 
 // SendMessage sends a message to a recipient
-func (session GGSession) SendMessage(uin uint64, text string) error {
-	cptr := C.CString(text)
-	if errno := C.gg_send_message2(session.session, ggClassMsg, (C.uin_t)(uin), (*C.uchar)(unsafe.Pointer(cptr))); errno != 0 {
+func (session GGSession) SendMessage(uin Uin, text string) error {
+	if errno := C.gg_send_message2(session.session, (C.int)(ggClassMsg), (C.uin_t)(uin), C.CString(text)); errno != 0 {
 		return NewGGError(-(int)(errno))
 	}
 	return nil

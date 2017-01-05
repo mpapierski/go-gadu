@@ -24,6 +24,7 @@ func (session GGSession) poller() {
 		if session.session.check&ggCheckWrite != 0 {
 			fdSet(wr, fd)
 		}
+
 		n, err := syscallSelect(fd+1, rd, wr, nil, &syscall.Timeval{Sec: 1, Usec: 0})
 		if err != nil {
 			log.Fatalf("Unable to select(): %s", err)
@@ -36,7 +37,7 @@ func (session GGSession) poller() {
 				session.Close()
 				break
 			}
-			session.events <- e
+			session.Events <- e
 		}
 	}
 }
