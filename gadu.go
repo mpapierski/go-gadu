@@ -37,7 +37,6 @@ int gg_notify2(struct gg_session *sess, uin_t *userlist, int count) {
 */
 import "C"
 import (
-	"fmt"
 	"log"
 	"time"
 	"unsafe"
@@ -97,7 +96,7 @@ func (session GGSession) watchFd() *GGEvent {
 }
 
 // Login starts connection with the server
-func (session GGSession) Login() error {
+func (session *GGSession) Login() error {
 	params := C.struct_gg_login_params{
 		uin:               (C.uin_t)(session.Uin),
 		password:          C.CString(session.Password),
@@ -113,7 +112,6 @@ func (session GGSession) Login() error {
 	if s == nil {
 		return NewGGError(err)
 	}
-	session.session = new(C.struct_gg_session)
 	session.session = s
 	go session.poller()
 	for {
@@ -121,7 +119,6 @@ func (session GGSession) Login() error {
 		defer e.Close()
 
 		if e.Type() == GGEventConnectionFailed {
-			fmt.Println("failed and Session ", session.session != nil)
 			return AccessDeniedError
 		}
 		if e.Type() == GGEventConnectionSuccess {
@@ -161,6 +158,10 @@ func (session GGSession) Notify(userList []Uin) error {
 		return NewGGError(-(int)(errno))
 	}
 	return nil
+}
+
+func (session GGSession) GetCPtr() *C.struct_gg_session {
+	return session.session
 }
 
 // SendMessage sends a message to a recipient

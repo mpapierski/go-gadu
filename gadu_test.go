@@ -34,5 +34,8 @@ func TestGGSessionSendMessage(t *testing.T) {
 	if e := session.Login(); e != AccessDeniedError {
 		t.Fatalf("Unable to login: %s", e.Error())
 	}
+	if session.GetCPtr() == nil {
+		t.Fatalf("cptr isi nil?!")
+	}
 	session.SendMessage(123456789, "Hello, world!")
 }
