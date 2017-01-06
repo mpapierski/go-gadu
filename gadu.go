@@ -92,7 +92,7 @@ func (session GGSession) Close() {
 }
 
 func (session GGSession) watchFd() *GGEvent {
-	return (*GGEvent)(C.gg_watch_fd(session.session))
+	return &GGEvent{cptr: C.gg_watch_fd(session.session)}
 }
 
 // Login starts connection with the server
